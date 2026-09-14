@@ -1,0 +1,628 @@
+<title>천체투영관 체크리스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#0a0f1e;
+    --bg-2:#0d1426;
+    --surface:#121a30;
+    --surface-2:#182240;
+    --line:rgba(226,232,255,0.09);
+    --line-strong:rgba(226,232,255,0.16);
+    --text:#eef1fb;
+    --text-dim:#93a0c4;
+    --text-faint:#5f6b8f;
+    --accent:#f4b942;
+    --accent-soft:rgba(244,185,66,0.14);
+    --btn-bg:#f7f8fc;
+    --btn-text:#12151f;
+    --btn-sub:#5c6270;
+    --done-bg:#d93a4a;
+    --done-bg-active:#c22f3e;
+    --done-text:#fff7f4;
+    --done-sub:rgba(255,247,244,0.78);
+    --focus:#8fb4ff;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1.5px 1.5px at 8% 12%, rgba(255,255,255,0.55), transparent 60%),
+      radial-gradient(1.5px 1.5px at 22% 68%, rgba(255,255,255,0.4), transparent 60%),
+      radial-gradient(1px 1px at 38% 24%, rgba(255,255,255,0.5), transparent 60%),
+      radial-gradient(1.5px 1.5px at 55% 82%, rgba(255,255,255,0.35), transparent 60%),
+      radial-gradient(1px 1px at 68% 15%, rgba(255,255,255,0.45), transparent 60%),
+      radial-gradient(1.5px 1.5px at 82% 55%, rgba(255,255,255,0.4), transparent 60%),
+      radial-gradient(1px 1px at 91% 30%, rgba(255,255,255,0.5), transparent 60%),
+      radial-gradient(1px 1px at 12% 90%, rgba(255,255,255,0.35), transparent 60%),
+      linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+    background-color:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans KR', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-inline:20px;
+    padding-block:0 48px;
+  }
+
+  a{color:inherit;}
+
+  .page{
+    max-width:560px;
+    margin:0 auto;
+  }
+
+  header.hero{
+    padding-block:28px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .hero-eyebrow{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+  }
+  h1{
+    margin:0;
+    font-size:26px;
+    font-weight:900;
+    line-height:1.25;
+    text-wrap:balance;
+    letter-spacing:-0.01em;
+  }
+  .hero-desc{
+    margin:0;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--text-dim);
+    max-width:46ch;
+  }
+
+  .progress-bar{
+    position:sticky;
+    top:0;
+    z-index:10;
+    margin-inline:-20px;
+    padding:10px 20px;
+    background:rgba(10,15,30,0.86);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .progress-track{
+    flex:1;
+    height:7px;
+    border-radius:99px;
+    background:var(--surface-2);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--accent), #ffd27a);
+    border-radius:99px;
+    transition:width 260ms ease;
+  }
+  .progress-count{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--text-dim);
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .reset-btn{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    color:var(--text-dim);
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    padding:7px 10px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background 140ms ease, color 140ms ease, border-color 140ms ease;
+  }
+  .reset-btn:hover{ color:var(--text); border-color:var(--text-faint); }
+  .reset-btn.confirming{
+    background:var(--done-bg);
+    color:var(--done-text);
+    border-color:var(--done-bg);
+  }
+  .reset-btn:focus-visible, .task-btn:focus-visible, .unit-btn:focus-visible{
+    outline:2px solid var(--focus);
+    outline-offset:2px;
+  }
+
+  main{ padding-top:22px; display:flex; flex-direction:column; gap:30px; }
+
+  .section{ display:flex; flex-direction:column; gap:12px; }
+  .section-head{ display:flex; align-items:baseline; gap:10px; }
+  .section-eyebrow{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12px;
+    font-weight:700;
+    color:var(--accent);
+    letter-spacing:0.04em;
+    flex-shrink:0;
+  }
+  .section-head h2{
+    margin:0;
+    font-size:17px;
+    font-weight:700;
+    color:var(--text);
+    letter-spacing:-0.01em;
+  }
+  .section-line{
+    flex:1;
+    height:1px;
+    background:var(--line);
+    margin-left:4px;
+  }
+
+  .task-list{ display:flex; flex-direction:column; gap:9px; }
+
+  .task-btn{
+    all:unset;
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    width:100%;
+    min-height:56px;
+    padding:14px 16px;
+    border-radius:13px;
+    background:var(--btn-bg);
+    box-shadow:0 1px 0 rgba(0,0,0,0.02), 0 8px 16px -12px rgba(0,0,0,0.45);
+    cursor:pointer;
+    transition:background 150ms ease, box-shadow 150ms ease, transform 80ms ease;
+  }
+  .task-btn:active{ transform:scale(0.985); }
+  .task-btn .label-wrap{ display:flex; flex-direction:column; gap:2px; }
+  .task-btn .label{
+    font-size:15.5px;
+    font-weight:700;
+    color:var(--btn-text);
+    line-height:1.4;
+  }
+  .task-btn .sub{
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--btn-sub);
+  }
+  .task-btn .mark{
+    flex-shrink:0;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:2px solid rgba(18,21,31,0.22);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .task-btn .mark svg{ width:12px; height:12px; opacity:0; transform:scale(0.5); transition:opacity 120ms ease, transform 120ms ease; }
+
+  .task-btn.done{
+    background:var(--done-bg);
+    box-shadow:0 1px 0 rgba(0,0,0,0.05), 0 10px 20px -12px rgba(217,58,74,0.55);
+  }
+  .task-btn.done .label{ color:var(--done-text); }
+  .task-btn.done .sub{ color:var(--done-sub); }
+  .task-btn.done .mark{ border-color:rgba(255,247,244,0.7); background:rgba(255,247,244,0.12); }
+  .task-btn.done .mark svg{ opacity:1; transform:scale(1); }
+  .task-btn.done .mark svg path{ stroke:var(--done-text); }
+
+  .task-group{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:13px 14px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .task-group-label{
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--text);
+    line-height:1.4;
+  }
+  .task-group-label .sub{
+    display:block;
+    margin-top:1px;
+    font-size:12px;
+    font-weight:500;
+    color:var(--text-dim);
+  }
+  .unit-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+  }
+  .unit-btn{
+    all:unset;
+    box-sizing:border-box;
+    flex:1 1 68px;
+    min-width:56px;
+    min-height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:8px 6px;
+    border-radius:9px;
+    background:var(--btn-bg);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--btn-text);
+    letter-spacing:0.01em;
+    cursor:pointer;
+    box-shadow:0 1px 0 rgba(0,0,0,0.02), 0 6px 12px -10px rgba(0,0,0,0.5);
+    transition:background 150ms ease, color 150ms ease, transform 80ms ease;
+  }
+  .unit-btn:active{ transform:scale(0.94); }
+  .unit-btn.done{
+    background:var(--done-bg);
+    color:var(--done-text);
+    box-shadow:0 1px 0 rgba(0,0,0,0.05), 0 8px 14px -10px rgba(217,58,74,0.55);
+  }
+
+  footer{
+    margin-top:34px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  footer p{
+    margin:0;
+    font-size:11.5px;
+    color:var(--text-faint);
+    line-height:1.6;
+  }
+
+  @media (max-width:380px){
+    h1{ font-size:23px; }
+    .task-btn .label{ font-size:14.5px; }
+  }
+
+  .complete-overlay{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(6,9,18,0.72);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 200ms ease;
+  }
+  .complete-overlay.show{ opacity:1; pointer-events:auto; }
+  .complete-card{
+    width:100%;
+    max-width:320px;
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    border-radius:18px;
+    padding:30px 24px 22px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    box-shadow:0 24px 60px -20px rgba(0,0,0,0.65);
+    transform:translateY(10px) scale(0.97);
+    transition:transform 220ms ease;
+  }
+  .complete-overlay.show .complete-card{ transform:translateY(0) scale(1); }
+  .complete-emoji{ font-size:32px; margin-bottom:8px; }
+  .complete-title{
+    margin:0;
+    font-size:19px;
+    font-weight:900;
+    color:var(--text);
+    letter-spacing:-0.01em;
+  }
+  .complete-sub{
+    margin:6px 0 18px;
+    font-size:13px;
+    color:var(--text-dim);
+    line-height:1.55;
+  }
+  .complete-actions{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    width:100%;
+  }
+  .complete-close, .complete-exit{
+    all:unset;
+    box-sizing:border-box;
+    width:100%;
+    padding:13px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14.5px;
+    text-align:center;
+    cursor:pointer;
+  }
+  .complete-exit{
+    background:var(--accent);
+    color:#1c1404;
+  }
+  .complete-close{
+    background:transparent;
+    border:1px solid var(--line-strong);
+    color:var(--text-dim);
+  }
+  .complete-close:hover{ color:var(--text); border-color:var(--text-faint); }
+  .complete-close:focus-visible, .complete-exit:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .complete-hint{
+    margin:12px 0 0;
+    font-size:11.5px;
+    line-height:1.55;
+    color:var(--text-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .complete-overlay, .complete-card, .task-btn, .unit-btn, .progress-fill{ transition:none; }
+  }
+</style>
+
+<div class="page">
+  <header class="hero">
+    <span class="hero-eyebrow">Planetarium Operation</span>
+    <h1>천체투영관 체크리스트</h1>
+    <p class="hero-desc">가동 준비부터 종료·정리까지, 순서대로 항목을 눌러 진행 상황을 표시하세요. 누르면 흰색 → 빨간색으로 바뀝니다.</p>
+  </header>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-count" id="progressCount">0 / 0</span>
+    <button type="button" class="reset-btn" id="resetBtn">초기화</button>
+  </div>
+
+  <main id="sections"></main>
+
+  <footer>
+    <p>기기에 자동 저장됩니다. 새로운 운영일에는 상단의 “초기화”를 두 번 눌러 전체 표시를 지워주세요.</p>
+  </footer>
+</div>
+
+<div class="complete-overlay" id="completeOverlay" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+  <div class="complete-card">
+    <span class="complete-emoji" aria-hidden="true">✨</span>
+    <p class="complete-title" id="completeTitle">고생하셨습니다.</p>
+    <p class="complete-sub">모든 체크리스트 항목을 완료했습니다.</p>
+    <div class="complete-actions">
+      <button type="button" class="complete-exit" id="completeExit">확인 (창 닫기)</button>
+      <button type="button" class="complete-close" id="completeClose">닫지 않고 계속 보기</button>
+    </div>
+    <p class="complete-hint" id="completeHint" hidden>브라우저 설정상 창을 자동으로 닫을 수 없습니다. 탭 또는 브라우저의 닫기 버튼으로 직접 닫아주세요.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var SECTIONS = [
+    { title:'운영준비 Ⅰ', tasks:[
+      { label:'주 출입구 개방' },
+      { label:'하절기 시스템실 냉방 상태 확인', sub:'(18도 유지)' }
+    ]},
+    { title:'투영관 시스템 가동', tasks:[
+      { label:'Supervisor(SUP) 컴퓨터 전원 ON / Beep 확인' },
+      { label:'Dome Manager V3 로그인 창 확인' },
+      { label:'ISS컴퓨터 1~6번 전원 ON / Beep 확인', units:['1번','2번','3번','4번','5번','6번'] },
+      { label:'Multimedia 컴퓨터 전원 ON / Beep 확인' },
+      { label:'Offset 값 확인', sub:'(10.XXX 이하)', units:['SUP','1번','2번','3번','4번','5번','6번','Multi'] },
+      { label:'시스템 안정을 위해 10분 이상 대기' },
+      { label:'프로젝터 전원 확인', units:['1번','2번','3번','4번','5번','6번'] },
+      { label:'당일 운영할 스크립트 실행' }
+    ]},
+    { title:'운영준비 Ⅱ', tasks:[
+      { label:'Audio mixer ON / 음량 조절, 확인' },
+      { label:'LED 패널 ON' },
+      { label:'무선 마이크 2개 배터리 확인' },
+      { label:'레이저 포인터 작동 확인', sub:'(건전지 여분 확인)' }
+    ]},
+    { title:'시스템 OFF', tasks:[
+      { label:'Projector 전원 OFF' },
+      { label:'ISS 컴퓨터 OFF' },
+      { label:'Multimedia 컴퓨터 OFF' },
+      { label:'Supervisor(SUP) 전원 OFF' },
+      { label:'Supervisor(SUP) 컴퓨터 확인' },
+      { label:'Multimedia 컴퓨터 확인' },
+      { label:'ISS 컴퓨터 확인', units:['1번','2번','3번','4번','5번','6번'] },
+      { label:'Projector 확인', units:['1번','2번','3번','4번','5번','6번'] }
+    ]},
+    { title:'투영관 정리', tasks:[
+      { label:'무선마이크 전원 OFF' },
+      { label:'Audio mixer OFF' },
+      { label:'LED조명 패널 OFF' },
+      { label:'분실물, 내부 청결상태 확인', sub:'(쓰레기 줍기)' },
+      { label:'의자파손 확인 후 운영일지 기록' },
+      { label:'조정실 냉난방기 확인, 조명 OFF' },
+      { label:'실내 냉난방기 OFF' },
+      { label:'왼쪽 출입문 잠금' },
+      { label:'하늘전망대 잠금 확인' }
+    ]}
+  ];
+
+  var STORE_KEY = 'planetarium-checklist-v1';
+  var state = {};
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(raw) state = JSON.parse(raw) || {};
+  }catch(e){ state = {}; }
+
+  function saveState(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  var checkIcon = '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6.3L4.6 9 10 2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var sectionsEl = document.getElementById('sections');
+  var allButtons = [];
+
+  SECTIONS.forEach(function(section, sIdx){
+    var secEl = document.createElement('section');
+    secEl.className = 'section';
+
+    var head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML =
+      '<span class="section-eyebrow">STEP ' + String(sIdx+1).padStart(2,'0') + '</span>' +
+      '<h2>' + section.title + '</h2>' +
+      '<span class="section-line"></span>';
+    secEl.appendChild(head);
+
+    var list = document.createElement('div');
+    list.className = 'task-list';
+
+    section.tasks.forEach(function(task, tIdx){
+      if(task.units && task.units.length){
+        var group = document.createElement('div');
+        group.className = 'task-group';
+        var labelHtml = task.label + (task.sub ? '<span class="sub">' + task.sub + '</span>' : '');
+        group.innerHTML = '<div class="task-group-label">' + labelHtml + '</div>';
+
+        var row = document.createElement('div');
+        row.className = 'unit-row';
+        task.units.forEach(function(unit, uIdx){
+          var id = 's' + sIdx + '-t' + tIdx + '-u' + uIdx;
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'unit-btn';
+          btn.textContent = unit;
+          btn.dataset.id = id;
+          if(state[id]) btn.classList.add('done');
+          btn.setAttribute('aria-pressed', state[id] ? 'true' : 'false');
+          btn.addEventListener('click', function(){ toggle(id, btn); });
+          row.appendChild(btn);
+          allButtons.push(id);
+        });
+        group.appendChild(row);
+        list.appendChild(group);
+      } else {
+        var id2 = 's' + sIdx + '-t' + tIdx;
+        var btn2 = document.createElement('button');
+        btn2.type = 'button';
+        btn2.className = 'task-btn';
+        if(state[id2]) btn2.classList.add('done');
+        btn2.setAttribute('aria-pressed', state[id2] ? 'true' : 'false');
+        btn2.dataset.id = id2;
+        btn2.innerHTML =
+          '<span class="label-wrap"><span class="label">' + task.label + '</span>' +
+          (task.sub ? '<span class="sub">' + task.sub + '</span>' : '') + '</span>' +
+          '<span class="mark">' + checkIcon + '</span>';
+        btn2.addEventListener('click', function(){ toggle(id2, btn2); });
+        list.appendChild(btn2);
+        allButtons.push(id2);
+      }
+    });
+
+    secEl.appendChild(list);
+    sectionsEl.appendChild(secEl);
+  });
+
+  var progressFill = document.getElementById('progressFill');
+  var progressCount = document.getElementById('progressCount');
+  var completeOverlay = document.getElementById('completeOverlay');
+  var completeClose = document.getElementById('completeClose');
+  var completeExit = document.getElementById('completeExit');
+  var completeHint = document.getElementById('completeHint');
+  var previousDone = 0;
+
+  function showComplete(){
+    completeHint.hidden = true;
+    completeOverlay.classList.add('show');
+    completeExit.focus();
+  }
+  function hideComplete(){
+    completeOverlay.classList.remove('show');
+  }
+  function exitWindow(){
+    window.close();
+    setTimeout(function(){
+      completeHint.hidden = false;
+    }, 350);
+  }
+  completeClose.addEventListener('click', hideComplete);
+  completeExit.addEventListener('click', exitWindow);
+  completeOverlay.addEventListener('click', function(e){
+    if(e.target === completeOverlay) hideComplete();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && completeOverlay.classList.contains('show')) hideComplete();
+  });
+
+  function updateProgress(checkComplete){
+    var done = 0;
+    allButtons.forEach(function(id){ if(state[id]) done++; });
+    var total = allButtons.length;
+    progressFill.style.width = (total ? (done/total*100) : 0) + '%';
+    progressCount.textContent = done + ' / ' + total;
+    if(checkComplete && total > 0 && done === total && previousDone < total){
+      showComplete();
+    }
+    previousDone = done;
+  }
+
+  function toggle(id, el){
+    state[id] = !state[id];
+    el.classList.toggle('done', !!state[id]);
+    el.setAttribute('aria-pressed', state[id] ? 'true' : 'false');
+    saveState();
+    updateProgress(true);
+  }
+
+  updateProgress(false);
+
+  var resetBtn = document.getElementById('resetBtn');
+  var confirming = false;
+  var confirmTimer = null;
+  resetBtn.addEventListener('click', function(){
+    if(!confirming){
+      confirming = true;
+      resetBtn.classList.add('confirming');
+      resetBtn.textContent = '한 번 더 탭';
+      confirmTimer = setTimeout(function(){
+        confirming = false;
+        resetBtn.classList.remove('confirming');
+        resetBtn.textContent = '초기화';
+      }, 2600);
+      return;
+    }
+    clearTimeout(confirmTimer);
+    confirming = false;
+    resetBtn.classList.remove('confirming');
+    resetBtn.textContent = '초기화';
+    state = {};
+    saveState();
+    document.querySelectorAll('.task-btn, .unit-btn').forEach(function(el){
+      el.classList.remove('done');
+      el.setAttribute('aria-pressed', 'false');
+    });
+    hideComplete();
+    updateProgress(false);
+  });
+})();
+</script>
