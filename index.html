@@ -288,6 +288,67 @@
     box-shadow:0 1px 0 rgba(0,0,0,0.05), 0 8px 14px -10px rgba(217,58,74,0.55);
   }
 
+  .task-btn.locked, .unit-btn.locked{ opacity:0.48; }
+
+  .timer-box{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px 18px 17px;
+    display:flex;
+    flex-direction:column;
+    gap:11px;
+    transition:border-color 200ms ease;
+  }
+  .timer-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .timer-label{
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--text-dim);
+    letter-spacing:0.01em;
+  }
+  .timer-status{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:99px;
+    background:var(--surface-2);
+    color:var(--text-dim);
+    white-space:nowrap;
+  }
+  .timer-display{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-size:38px;
+    font-weight:700;
+    letter-spacing:0.01em;
+    color:var(--text);
+    font-variant-numeric:tabular-nums;
+    text-align:center;
+  }
+  .timer-track{
+    height:9px;
+    border-radius:99px;
+    background:var(--surface-2);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .timer-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--accent), #ffd27a);
+    transition:width 900ms linear;
+  }
+  .timer-box.running{ border-color:rgba(244,185,66,0.45); }
+  .timer-box.running .timer-status{ background:var(--accent-soft); color:var(--accent); }
+  .timer-box.running .timer-display{ color:var(--accent); }
+  .timer-box.done{ border-color:rgba(217,58,74,0.5); }
+  .timer-box.done .timer-status{ background:rgba(217,58,74,0.18); color:#ff8a97; }
+  .timer-box.done .timer-fill{ background:linear-gradient(90deg, var(--done-bg), #ff6b78); }
+  .timer-box.done .timer-display{ color:#ff8a97; }
+
   footer{
     margin-top:38px;
     padding-top:20px;
@@ -391,7 +452,7 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .complete-overlay, .complete-card, .task-btn, .unit-btn, .progress-fill{ transition:none; }
+    .complete-overlay, .complete-card, .task-btn, .unit-btn, .progress-fill, .timer-fill{ transition:none; }
   }
 </style>
 </head>
@@ -430,6 +491,26 @@
   </div>
 </div>
 
+<div class="complete-overlay" id="timerOverlay" role="dialog" aria-modal="true" aria-labelledby="timerPopupTitle">
+  <div class="complete-card">
+    <span class="complete-emoji" aria-hidden="true">⏰</span>
+    <p class="complete-title" id="timerPopupTitle">다음 단계를 진행하세요</p>
+    <div class="complete-actions">
+      <button type="button" class="complete-exit" id="timerPopupClose">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="complete-overlay" id="orderOverlay" role="dialog" aria-modal="true" aria-labelledby="orderPopupTitle">
+  <div class="complete-card">
+    <span class="complete-emoji" aria-hidden="true">⚠️</span>
+    <p class="complete-title" id="orderPopupTitle">이전 단계를 먼저 확인하세요!</p>
+    <div class="complete-actions">
+      <button type="button" class="complete-exit" id="orderPopupClose">확인</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   var SECTIONS = [
@@ -444,7 +525,8 @@
       { label:'ISS컴퓨터 1~6번 전원 ON / Beep 확인', units:['1번','2번','3번','4번','5번','6번'] },
       { label:'Multimedia 컴퓨터 전원 ON / Beep 확인' },
       { label:'Offset 값 확인', sub:'(10.XXX 이하)', units:['SUP','1번','2번','3번','4번','5번','6번','Multi'] },
-      { label:'시스템 안정을 위해 10분 이상 대기' },
+      { label:'시스템 안정을 위해 10분 이상 대기', timer:true },
+      { label:'Dome Manager V3 로그인 및 프로젝터 전원 ON' },
       { label:'프로젝터 전원 확인', units:['1번','2번','3번','4번','5번','6번'] },
       { label:'Audio mixer ON / 음량 조절, 확인' },
       { label:'당일 운영할 스크립트 실행' }
@@ -491,6 +573,30 @@
 
   var sectionsEl = document.getElementById('sections');
   var allButtons = [];
+  var buttonEls = {};
+  var buttonIndex = {};
+  var TIMER_TASK_ID = null;
+  var TIMER_DURATION = 10 * 60 * 1000;
+  var timerBoxEl, timerStatusEl, timerDisplayEl, timerFillEl;
+  var timerState = null;
+  var timerInterval = null;
+
+  function buildTimerBox(){
+    var box = document.createElement('div');
+    box.className = 'timer-box idle';
+    box.innerHTML =
+      '<div class="timer-head">' +
+        '<span class="timer-label">안정화 타이머</span>' +
+        '<span class="timer-status">대기 중</span>' +
+      '</div>' +
+      '<div class="timer-display">10:00</div>' +
+      '<div class="timer-track"><div class="timer-fill"></div></div>';
+    timerBoxEl = box;
+    timerStatusEl = box.querySelector('.timer-status');
+    timerDisplayEl = box.querySelector('.timer-display');
+    timerFillEl = box.querySelector('.timer-fill');
+    return box;
+  }
 
   SECTIONS.forEach(function(section, sIdx){
     var secEl = document.createElement('section');
@@ -528,6 +634,7 @@
           btn.addEventListener('click', function(){ toggle(id, btn); });
           row.appendChild(btn);
           allButtons.push(id);
+          buttonEls[id] = btn;
         });
         group.appendChild(row);
         list.appendChild(group);
@@ -546,6 +653,11 @@
         btn2.addEventListener('click', function(){ toggle(id2, btn2); });
         list.appendChild(btn2);
         allButtons.push(id2);
+        buttonEls[id2] = btn2;
+        if(task.timer){
+          TIMER_TASK_ID = id2;
+          list.appendChild(buildTimerBox());
+        }
       }
     });
 
@@ -553,12 +665,25 @@
     sectionsEl.appendChild(secEl);
   });
 
+  allButtons.forEach(function(id, i){ buttonIndex[id] = i; });
+
+  // The step immediately after the stabilization-wait task must wait for the
+  // timer to fully finish, not just for the wait box to be checked.
+  var timerGateId = null;
+  if(TIMER_TASK_ID != null){
+    timerGateId = allButtons[buttonIndex[TIMER_TASK_ID] + 1] || null;
+  }
+
   var progressFill = document.getElementById('progressFill');
   var progressCount = document.getElementById('progressCount');
   var completeOverlay = document.getElementById('completeOverlay');
   var completeClose = document.getElementById('completeClose');
   var completeExit = document.getElementById('completeExit');
   var completeHint = document.getElementById('completeHint');
+  var timerOverlay = document.getElementById('timerOverlay');
+  var timerPopupClose = document.getElementById('timerPopupClose');
+  var orderOverlay = document.getElementById('orderOverlay');
+  var orderPopupClose = document.getElementById('orderPopupClose');
   var previousDone = 0;
 
   function showComplete(){
@@ -580,9 +705,156 @@
   completeOverlay.addEventListener('click', function(e){
     if(e.target === completeOverlay) hideComplete();
   });
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && completeOverlay.classList.contains('show')) hideComplete();
+
+  function showTimerPopup(){
+    timerOverlay.classList.add('show');
+    timerPopupClose.focus();
+  }
+  function hideTimerPopup(){
+    timerOverlay.classList.remove('show');
+    if(timerState){
+      timerState.acknowledged = true;
+      state.__timer = timerState;
+      saveState();
+    }
+  }
+  timerPopupClose.addEventListener('click', hideTimerPopup);
+  timerOverlay.addEventListener('click', function(e){
+    if(e.target === timerOverlay) hideTimerPopup();
   });
+
+  function showOrderPopup(){
+    orderOverlay.classList.add('show');
+    orderPopupClose.focus();
+  }
+  function hideOrderPopup(){
+    orderOverlay.classList.remove('show');
+  }
+  orderPopupClose.addEventListener('click', hideOrderPopup);
+  orderOverlay.addEventListener('click', function(e){
+    if(e.target === orderOverlay) hideOrderPopup();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    if(completeOverlay.classList.contains('show')) hideComplete();
+    if(timerOverlay.classList.contains('show')) hideTimerPopup();
+    if(orderOverlay.classList.contains('show')) hideOrderPopup();
+  });
+
+  function setTimerIdle(){
+    if(!timerBoxEl) return;
+    timerBoxEl.classList.remove('running', 'done');
+    timerBoxEl.classList.add('idle');
+    timerStatusEl.textContent = '대기 중';
+    timerDisplayEl.textContent = '10:00';
+    timerFillEl.style.width = '0%';
+  }
+  function setTimerRunning(){
+    if(!timerBoxEl) return;
+    timerBoxEl.classList.remove('idle', 'done');
+    timerBoxEl.classList.add('running');
+    timerStatusEl.textContent = '진행 중';
+  }
+  function setTimerDone(){
+    if(!timerBoxEl) return;
+    timerBoxEl.classList.remove('idle', 'running');
+    timerBoxEl.classList.add('done');
+    timerStatusEl.textContent = '완료';
+    timerDisplayEl.textContent = '00:00';
+    timerFillEl.style.width = '100%';
+  }
+  function updateTimerDisplay(remainingMs){
+    if(!timerDisplayEl) return;
+    var totalSec = Math.max(0, Math.ceil(remainingMs / 1000));
+    var m = Math.floor(totalSec / 60);
+    var s = totalSec % 60;
+    timerDisplayEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    var pct = Math.min(100, Math.max(0, (1 - remainingMs / TIMER_DURATION) * 100));
+    timerFillEl.style.width = pct + '%';
+  }
+  function tickTimer(){
+    if(!timerState) return;
+    var remaining = TIMER_DURATION - (Date.now() - timerState.startedAt);
+    if(remaining <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      if(!timerState.completed){
+        timerState.completed = true;
+        state.__timer = timerState;
+        saveState();
+      }
+      setTimerDone();
+      refreshLockStates();
+      if(!timerState.acknowledged) showTimerPopup();
+      return;
+    }
+    updateTimerDisplay(remaining);
+  }
+  function startTimer(){
+    clearInterval(timerInterval);
+    timerState = { startedAt: Date.now(), completed:false, acknowledged:false };
+    state.__timer = timerState;
+    saveState();
+    setTimerRunning();
+    updateTimerDisplay(TIMER_DURATION);
+    timerInterval = setInterval(tickTimer, 250);
+  }
+  function resetTimer(){
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerState = null;
+    delete state.__timer;
+    saveState();
+    setTimerIdle();
+    hideTimerPopup();
+  }
+  function handleTimerToggle(isOn){
+    if(isOn) startTimer(); else resetTimer();
+  }
+  function initTimerFromState(){
+    if(state.__timer){
+      timerState = state.__timer;
+      if(timerState.completed){
+        updateTimerDisplay(0);
+        setTimerDone();
+        refreshLockStates();
+        if(!timerState.acknowledged) showTimerPopup();
+      } else {
+        var remaining = TIMER_DURATION - (Date.now() - timerState.startedAt);
+        if(remaining <= 0){
+          timerState.completed = true;
+          state.__timer = timerState;
+          saveState();
+          updateTimerDisplay(0);
+          setTimerDone();
+          refreshLockStates();
+          if(!timerState.acknowledged) showTimerPopup();
+        } else {
+          setTimerRunning();
+          updateTimerDisplay(remaining);
+          timerInterval = setInterval(tickTimer, 250);
+        }
+      }
+    } else {
+      setTimerIdle();
+    }
+  }
+
+  function refreshLockStates(){
+    var allPriorDone = true;
+    allButtons.forEach(function(id){
+      var el = buttonEls[id];
+      var isDone = !!state[id];
+      var timerNotReady = (id === timerGateId) && !(timerState && timerState.completed);
+      if(isDone){
+        el.classList.remove('locked');
+      } else {
+        el.classList.toggle('locked', !allPriorDone || timerNotReady);
+      }
+      if(!isDone) allPriorDone = false;
+    });
+  }
 
   function updateProgress(checkComplete){
     var done = 0;
@@ -597,14 +869,32 @@
   }
 
   function toggle(id, el){
+    var turningOn = !state[id];
+    if(turningOn){
+      var idx = buttonIndex[id];
+      for(var i = 0; i < idx; i++){
+        if(!state[allButtons[i]]){
+          showOrderPopup();
+          return;
+        }
+      }
+      if(id === timerGateId && !(timerState && timerState.completed)){
+        showOrderPopup();
+        return;
+      }
+    }
     state[id] = !state[id];
     el.classList.toggle('done', !!state[id]);
     el.setAttribute('aria-pressed', state[id] ? 'true' : 'false');
     saveState();
     updateProgress(true);
+    refreshLockStates();
+    if(id === TIMER_TASK_ID) handleTimerToggle(state[id]);
   }
 
   updateProgress(false);
+  refreshLockStates();
+  initTimerFromState();
 
   var resetBtn = document.getElementById('resetBtn');
   var confirming = false;
@@ -628,11 +918,14 @@
     state = {};
     saveState();
     document.querySelectorAll('.task-btn, .unit-btn').forEach(function(el){
-      el.classList.remove('done');
+      el.classList.remove('done', 'locked');
       el.setAttribute('aria-pressed', 'false');
     });
     hideComplete();
+    hideOrderPopup();
+    resetTimer();
     updateProgress(false);
+    refreshLockStates();
   });
 })();
 </script>
